@@ -4,7 +4,7 @@ import { deleteArticle, getBookInfo } from '../../api/books'
 import PageBody from '../../components/Pagebody'
 import { Button, message, Modal, Table } from 'antd'
 import { connect, useDispatch } from 'react-redux'
-import { SET_ARTICLE_LIST } from '../../store/constants'
+import { SET_ARTICLE_LIST, SET_ARTICLE_PAGE } from '../../store/constants'
 import Helmet from 'react-helmet'
 
 const getTitle = (list) => {
@@ -14,9 +14,6 @@ const getTitle = (list) => {
   return ''
 }
 
-addEventListener('popstate', (e) => {
-  console.log(e)
-})
 export default connect((state) => ({ lists: state.articles.lists }))(Book)
 function Book({ match, history, lists }) {
   const {
@@ -26,16 +23,17 @@ function Book({ match, history, lists }) {
     history.go(-1)
     return null
   }
-  const [data, setdata] = useState(0)
-  const list = lists[bookId] || []
-  const title = getTitle(list)
+
+  const data = lists[bookId] || []
+  const dataList = data.list || []
+  const pageConfig = data.pageConfig || {}
+  const title = getTitle(data.list)
   const [loading, setLoading] = useState(false)
 
   const dispatch = useDispatch()
-  console.log(data)
+
   const getList = () => {
     setLoading(true)
-    setdata(2)
     getBookInfo(bookId)
       .then((res) => {
         if (res.code === 1 && res.data) {
@@ -55,11 +53,23 @@ function Book({ match, history, lists }) {
         setLoading(false)
       })
   }
+
   useEffect(() => {
-    if (!list.length) {
+    if (!dataList.length) {
       getList()
     }
   }, [])
+
+  const handleTableChange = (pagination) => {
+    dispatch({
+      type: SET_ARTICLE_PAGE,
+      payload: {
+        id: bookId,
+        pageNo: pagination.current,
+        pageSize: pagination.pageSize,
+      },
+    })
+  }
 
   const handleCheck = (record) => {
     history.push(`/chapter/${record.key}`)
@@ -84,13 +94,15 @@ function Book({ match, history, lists }) {
   }
   const columns = [
     {
+      dataIndex: 'order',
+      title: '序号',
+      width: 60,
+    },
+    {
       dataIndex: 'chapterName',
       title: '章节名称',
     },
-    {
-      dataIndex: 'order',
-      title: '序号',
-    },
+
     {
       dataIndex: 'updatedTime',
       title: '更新时间',
@@ -125,10 +137,11 @@ function Book({ match, history, lists }) {
         <title>{title}</title>
       </Helmet>
       <Table
+        onChange={handleTableChange}
         loading={loading}
-        dataSource={list}
+        dataSource={dataList}
         columns={columns}
-        pagination={{ pageSize: 30 }}
+        pagination={{ ...pageConfig, current: pageConfig.pageNo }}
       />
     </PageBody>
   )

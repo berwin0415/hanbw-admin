@@ -23,9 +23,12 @@ request.interceptors.response.use(
     return response.data
   },
   (err) => {
-    if (err.response.status === 401) {
-      goLogin()
+    if (err.response) {
+      if (err.response.status === 401) {
+        goLogin()
+      }
     }
+
     return Promise.reject(err)
   }
 )
