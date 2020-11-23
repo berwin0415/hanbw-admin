@@ -14,5 +14,5 @@ export const updateBook = (params) => {
 }
 
 export const deleteArticle = (id) =>
-  request.put(`${url.baseArticle}/${id}`, { status: 1 })
+  request.put(`${url.baseArticle}/${id}`, { status: 0 })
 export const getChapterInfo = (id) => request.get(`${url.baseArticle}/${id}`)
