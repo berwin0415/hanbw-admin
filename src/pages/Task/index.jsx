@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Button, Modal, Form, Input, message, Table } from 'antd'
+import { Button, Modal, Form, message, Table } from 'antd'
 import PropTypes from 'prop-types'
 import {
   getTasksList,
@@ -9,6 +9,7 @@ import {
 } from '../../api/spiderTasks'
 import styles from './index.module.scss'
 import PageBody from '../../components/Pagebody'
+import BookSelect from './BookSelect'
 
 export default function SpiderTask() {
   const [list, setList] = useState([])
@@ -45,9 +46,9 @@ export default function SpiderTask() {
     form
       .validateFields()
       .then((values) => {
-        const { bookName } = values
+        const { bookId } = values
         setCreating(true)
-        postTask({ bookName })
+        postTask({ bookId })
           .then((res) => {
             if (res.code === 1) {
               message.success('创建成功')
@@ -91,7 +92,7 @@ export default function SpiderTask() {
     updateTaskStatus(3, record)
   }
   const handleDelete = (record) => {
-    Modal.warning({
+    Modal.confirm({
       title: '确认删除？',
       content: `任务：${record.bookName} 一但删除将不可恢复，确认删除？`,
       onOk() {
@@ -118,6 +119,10 @@ export default function SpiderTask() {
     {
       dataIndex: 'bookName',
       title: '书籍名称',
+    },
+    {
+      dataIndex: 'author',
+      title: '作 者',
     },
     {
       dataIndex: 'taskStatus',
@@ -208,19 +213,20 @@ export default function SpiderTask() {
         okButtonProps={{
           loading: creating,
         }}
+        forceRender
       >
         <Form form={form} labelCol={{ span: 4 }} wrapperCol={{ span: 20 }}>
           <Form.Item
             label="书籍名称"
-            name="bookName"
+            name="bookId"
             rules={[
               {
                 required: true,
-                message: '请输入书籍名称!',
+                message: '请选择书籍!',
               },
             ]}
           >
-            <Input />
+            <BookSelect />
           </Form.Item>
         </Form>
       </Modal>

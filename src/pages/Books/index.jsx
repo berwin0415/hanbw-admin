@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
-import { getBookList, updateBook } from '../../api/books'
+import { getBookList } from '../../api/books'
 import PageBody from '../../components/Pagebody'
-import { Button, Table, message } from 'antd'
+import { Button, Table } from 'antd'
 import Helmet from 'react-helmet'
 import { useDispatch } from 'react-redux'
 import { SET_ARTICLE_PAGE } from '../../store/constants'
@@ -10,14 +10,21 @@ import { SET_ARTICLE_PAGE } from '../../store/constants'
 export default function Books({ history }) {
   const [list, setList] = useState([])
   const [loading, setLoading] = useState(false)
+  const [total, setTotal] = useState(0)
+  const [pageNo, setPageNo] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+
   const dispatch = useDispatch()
   const getList = () => {
     setLoading(true)
-    getBookList()
+    getBookList({
+      pageNo,
+    })
       .then((res) => {
         if (res.code === 1) {
-          const { list = [] } = res.data || {}
+          const { list = [], total } = res.data || {}
           setList(list.map((item) => ({ ...item, key: item.bookId })))
+          setTotal(total)
         }
       })
       .finally(() => {
@@ -26,7 +33,7 @@ export default function Books({ history }) {
   }
   useEffect(() => {
     getList()
-  }, [])
+  }, [pageNo, pageSize])
 
   const handleCheck = (record) => {
     dispatch({
@@ -40,19 +47,11 @@ export default function Books({ history }) {
     history.push(`/book/${record.key}`)
   }
 
-  const handleFreez = (record) => {
-    setLoading(true)
-    updateBook({ bookId: record.key, status: record.status === 2 ? 1 : 2 })
-      .then((res) => {
-        if (res.code === 1) {
-          message.success('更新成功')
-          getList()
-        }
-      })
-      .finally(() => {
-        setLoading(false)
-      })
+  const handleTableChange = (pagination) => {
+    setPageNo(pagination.current)
+    setPageSize(pagination.setPageSize)
   }
+
   const columns = [
     {
       dataIndex: 'bookName',
@@ -70,14 +69,10 @@ export default function Books({ history }) {
       dataIndex: 'options',
       title: '操作',
       render(_, record) {
-        const status = record.status
         return (
           <div>
             <Button type="link" onClick={() => handleCheck(record)}>
               查看
-            </Button>
-            <Button type="link" onClick={() => handleFreez(record)}>
-              {status === 2 ? '冻结' : '开始'}
             </Button>
             <Button disabled type="link" style={{ color: 'red' }}>
               删除
@@ -96,7 +91,8 @@ export default function Books({ history }) {
         loading={loading}
         dataSource={list}
         columns={columns}
-        pagination={{ pageSize: 30 }}
+        onChange={handleTableChange}
+        pagination={{ pageSize, current: pageNo, total }}
       />
     </PageBody>
   )
